@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NIVEL 2</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Courier New', monospace; background: #000; overflow: hidden; touch-action: none; }
+        #ui-top {
+            position: absolute; top: 16px; left: 16px; z-index: 100;
+            background: rgba(0,8,20,0.90); color: #00ffcc; padding: 14px 18px;
+            border: 2px solid #00ffcc; border-radius: 12px;
+            font-size: 15px; line-height: 2; pointer-events: none;
+        }
+        #ui-top .label { color: #00ffcc66; font-size: 11px; letter-spacing: 2px; }
+        #puntos-val { font-size: 22px; font-weight: bold; color: #00ffcc; transition: color 0.2s; }
+        .vida-icon svg { width: 26px; height: 26px; vertical-align: middle; }
+        #nivel-badge {
+            position: absolute; top: 16px; right: 16px; z-index: 100;
+            background: rgba(0,8,20,0.90); color: #ffd700; padding: 12px 20px;
+            border: 2px solid #ffd700; border-radius: 12px;
+            font-size: 16px; font-weight: bold; letter-spacing: 2px; pointer-events: none;
+        }
+        .ring-icon { display: inline-block; vertical-align: middle; margin-right: 5px; }
+        .controles-movil {
+            position: absolute; bottom: 20px; width: 100%;
+            display: none; justify-content: space-between; padding: 0 28px;
+            box-sizing: border-box; z-index: 1000; pointer-events: none;
+        }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 58px); gap: 6px; pointer-events: auto; }
+        .d-btn, .btn-salto {
+            width: 58px; height: 58px; background: rgba(0,255,204,0.15);
+            border: 2px solid #00ffcc; color: #00ffcc; display: flex;
+            align-items: center; justify-content: center; border-radius: 12px;
+            font-weight: bold; font-size: 20px; user-select: none; -webkit-user-select: none; touch-action: none;
+        }
+        .btn-salto { width: 110px; height: 85px; font-size: 13px; letter-spacing: 1px; pointer-events: auto; border-radius: 16px; }
+        #msg-nivel {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 3000; color: #ffd700; font-size: 40px; font-weight: bold;
+            text-shadow: 0 0 30px #ffd700; display: none; text-align: center;
+            background: rgba(0,0,0,0.82); padding: 28px 50px; border-radius: 20px;
+            border: 3px solid #ffd700; white-space: nowrap;
+        }
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #0a1a2e 0%, #000 100%);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            color: #00ffcc; border: 8px double #00ffcc; box-sizing: border-box;
+        }
+        .terminal-box {
+            background: rgba(0,15,35,0.97); padding: 50px 60px;
+            border: 2px solid #00ffcc; box-shadow: 0 0 50px #00ffcc; border-radius: 20px; text-align: center;
+        }
+        .btn-systec {
+            margin-top: 28px; padding: 15px 0; background: #00ffcc; color: #000;
+            border: none; font-weight: bold; cursor: pointer; font-size: 18px;
+            font-family: inherit; width: 100%; letter-spacing: 3px;
+            clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+        }
+        .btn-secondary {
+            margin-top: 14px; padding: 12px 0; background: transparent;
+            border: 1px solid #00ffcc55; color: #00ffcc88; cursor: pointer;
+            font-family: inherit; font-size: 14px; width: 100%; border-radius: 6px;
+        }
+    </style>
+    <script>
+    const NIVEL_NUM    = 2;
+    const NIVEL_NOMBRE = "NIVEL";
+    const SIGUIENTE_NIVEL = 'nivel3.html';
+
+    const PLATAFORMAS = [
+        { id:"p_0", x:  0, y:  0, z:  0,  w: 8, d: 8, color:"#003333" },
+        { id:"p_1", x:  8, y:  3, z: -8,  w: 4, d: 4, color:"#005555" },
+        { id:"p_2", x: -8, y:  6, z:-15,  w: 4, d: 4, color:"#007777" },
+        { id:"p_3", x:  6, y:  9, z:-22,  w: 3, d: 3, color:"#009999" },
+        { id:"p_4", x: -4, y: 12, z:-28,  w: 3, d: 3, color:"#00bbbb" },
+        { id:"p_5", x:  0, y: 15, z:-35,  w: 4, d: 4, color:"#005555" },
+        { id:"p_6", x: 10, y:  5, z:-20,  w: 3, d: 3, color:"#007777" },
+        { id:"p_7", x:-10, y:  8, z:-28,  w: 3, d: 3, color:"#009999" },
+        { id:"p_8", x:  0, y: 18, z:-42,  w: 9, d: 7, color:"#003333" },
+    ];
+
+    const RINGS = [
+        { id:"r_0",  x:  8, y:  4.8, z: -8  },
+        { id:"r_1",  x:  9, y:  4.8, z: -9  },
+        { id:"r_2",  x:  7, y:  4.8, z: -8  },
+        { id:"r_3",  x: -8, y:  7.8, z:-15  },
+        { id:"r_4",  x: -7, y:  7.8, z:-16  },
+        { id:"r_5",  x: -9, y:  7.8, z:-14  },
+        { id:"r_6",  x:  6, y: 10.8, z:-22  },
+        { id:"r_7",  x:  7, y: 10.8, z:-22  },
+        { id:"r_8",  x:  5, y: 10.8, z:-23  },
+        { id:"r_9",  x: -4, y: 13.8, z:-28  },
+        { id:"r_10", x: -3, y: 13.8, z:-29  },
+        { id:"r_11", x: 10, y:  6.8, z:-20  },
+        { id:"r_12", x:-10, y:  9.8, z:-28  },
+        { id:"r_13", x:  0, y: 16.8, z:-35  },
+        { id:"r_14", x:  1, y: 16.8, z:-36  },
+        { id:"r_15", x: -1, y: 16.8, z:-35  },
+    ];
+
+    const META  = { x:0, y:18.2, z:-42 };
+    const SPAWN = { x:0, y:3, z:0 };
+
+    const SONIC_HEAD_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="58" rx="36" ry="33" fill="#0054b2"/>
+        <ellipse cx="50" cy="70" rx="18" ry="13" fill="#f1c27d"/>
+        <ellipse cx="50" cy="63" rx="4" ry="2.5" fill="#222"/>
+        <ellipse cx="37" cy="53" rx="8" ry="10" fill="white"/>
+        <ellipse cx="37" cy="53" rx="4.5" ry="6.5" fill="#222"/>
+        <circle cx="39" cy="50" r="1.8" fill="white"/>
+        <ellipse cx="63" cy="53" rx="8" ry="10" fill="white"/>
+        <ellipse cx="63" cy="53" rx="4.5" ry="6.5" fill="#222"/>
+        <circle cx="65" cy="50" r="1.8" fill="white"/>
+        <ellipse cx="50" cy="25" rx="11" ry="17" fill="#0054b2" transform="rotate(-8 50 25)"/>
+        <ellipse cx="30" cy="32" rx="9" ry="15" fill="#0054b2" transform="rotate(-33 30 32)"/>
+        <ellipse cx="70" cy="32" rx="9" ry="15" fill="#0054b2" transform="rotate(33 70 32)"/>
+    </svg>`;
+
+    let juegoIniciado = false;
+    const nombrePiloto = localStorage.getItem('nombrePiloto') || 'JUGADOR';
+
+    function construirNivel() {
+        const scene = document.querySelector('a-scene');
+        PLATAFORMAS.forEach(p => {
+            const box = document.createElement('a-box');
+            box.setAttribute('class', 'suelo');
+            box.setAttribute('static-body', '');
+            box.setAttribute('position', `${p.x} ${p.y} ${p.z}`);
+            box.setAttribute('width', p.w); box.setAttribute('height', 0.4); box.setAttribute('depth', p.d);
+            box.setAttribute('material', `color:${p.color}; emissive:${p.color}; emissiveIntensity:0.12`);
+            scene.appendChild(box);
+        });
+        RINGS.forEach(r => {
+            const ring = document.createElement('a-torus');
+            ring.setAttribute('id', r.id); ring.setAttribute('class', 'ring');
+            ring.setAttribute('position', `${r.x} ${r.y} ${r.z}`);
+            ring.setAttribute('radius', '0.55'); ring.setAttribute('radius-tubular', '0.11');
+            ring.setAttribute('rotation', '90 0 0');
+            ring.setAttribute('material', 'color:#ffd700; emissive:#ffaa00; emissiveIntensity:1.2; metalness:1; roughness:0.05');
+            ring.setAttribute('animation', 'property:rotation; to:90 360 0; dur:1400; loop:true; easing:linear');
+            ring.setAttribute('data-collected', 'false');
+            scene.appendChild(ring);
+        });
+        crearBanderin(META, NIVEL_NUM, scene);
+    }
+
+    function crearBanderin(m, num, scene) {
+        const flagColors = { 1:'#e63946', 2:'#2196f3', 3:'#ff9800' };
+        const fc = flagColors[num];
+        const meta = document.createElement('a-entity');
+        meta.setAttribute('id', 'meta');
+        meta.setAttribute('position', `${m.x} ${m.y} ${m.z}`);
+        const post = document.createElement('a-cylinder');
+        post.setAttribute('radius','0.18'); post.setAttribute('height','8'); post.setAttribute('position','0 4 0');
+        post.setAttribute('material','color:#c0c0c0; metalness:0.9; roughness:0.1');
+        meta.appendChild(post);
+        const ball = document.createElement('a-sphere');
+        ball.setAttribute('radius','0.42'); ball.setAttribute('position','0 8.4 0');
+        ball.setAttribute('material',`color:#ffd700; emissive:#ffd700; emissiveIntensity:1.8; metalness:0.8`);
+        ball.setAttribute('animation','property:material.emissiveIntensity; from:0.6; to:3; dur:700; loop:true; dir:alternate');
+        meta.appendChild(ball);
+        const arm = document.createElement('a-cylinder');
+        arm.setAttribute('radius','0.07'); arm.setAttribute('height','2.6');
+        arm.setAttribute('rotation','0 0 90'); arm.setAttribute('position','1.3 7.9 0');
+        arm.setAttribute('material','color:#888; metalness:0.8');
+        meta.appendChild(arm);
+        const flagPanel = document.createElement('a-box');
+        flagPanel.setAttribute('width','2.2'); flagPanel.setAttribute('height','1.3'); flagPanel.setAttribute('depth','0.06');
+        flagPanel.setAttribute('position','2.4 7.7 0');
+        flagPanel.setAttribute('material',`color:${fc}; emissive:${fc}; emissiveIntensity:0.7; side:double`);
+        flagPanel.setAttribute('animation__wave','property:scale; from:1 1 1; to:0.82 1 1; dur:550; loop:true; dir:alternate; easing:easeInOutSine');
+        meta.appendChild(flagPanel);
+        const light = document.createElement('a-light');
+        light.setAttribute('type','point'); light.setAttribute('intensity','2'); light.setAttribute('color',fc);
+        light.setAttribute('position','0 6 2'); light.setAttribute('distance','14');
+        meta.appendChild(light);
+        for (let i = 0; i < 3; i++) {
+            const aura = document.createElement('a-torus');
+            aura.setAttribute('radius',`${0.9+i*0.45}`); aura.setAttribute('radius-tubular','0.04');
+            aura.setAttribute('position',`0 ${1.5+i*1.4} 0`);
+            aura.setAttribute('material',`color:${fc}; emissive:${fc}; emissiveIntensity:0.6; opacity:0.45; transparent:true`);
+            aura.setAttribute('animation',`property:rotation; to:360 ${120*i} 0; dur:${2200+i*400}; loop:true; easing:linear`);
+            meta.appendChild(aura);
+        }
+        scene.appendChild(meta);
+    }
+
+    AFRAME.registerComponent('motor-gameplay', {
+        init: function () {
+            this.puntos = parseInt(localStorage.getItem('puntajeAcumulado') || '0');
+            this.vidas  = parseInt(localStorage.getItem('vidas') || '3');
+            this.puedeSaltar = true; this.invulnerable = false; this.metaActivada = false;
+            this.keys = {};
+            this.actualizarUI();
+            window.addEventListener('keydown', e => { this.keys[e.code] = true; });
+            window.addEventListener('keyup',   e => { this.keys[e.code] = false; });
+            const bind = (id, code) => {
+                const el = document.getElementById(id); if (!el) return;
+                el.addEventListener('touchstart', e => { e.preventDefault(); this.keys[code] = true;  }, {passive:false});
+                el.addEventListener('touchend',   e => { e.preventDefault(); this.keys[code] = false; }, {passive:false});
+            };
+            bind('m-up','KeyW'); bind('m-down','KeyS'); bind('m-left','KeyA'); bind('m-right','KeyD'); bind('m-jump','Space');
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+                document.querySelector('.controles-movil').style.display = 'flex';
+        },
+        actualizarUI: function () {
+            const pEl = document.getElementById('puntos-val');
+            const vEl = document.getElementById('vidas-val');
+            const rEl = document.getElementById('rings-val');
+            if (pEl) pEl.innerText = this.puntos;
+            if (vEl) { let h=''; for(let i=0;i<Math.max(0,this.vidas);i++) h+=`<span class="vida-icon">${SONIC_HEAD_SVG}</span>`; vEl.innerHTML=h; }
+            if (rEl) {
+                const total=document.querySelectorAll('.ring').length;
+                const col=document.querySelectorAll('.ring[data-collected="true"]').length;
+                rEl.innerHTML=`<svg class="ring-icon" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="#ffd700"/><circle cx="9" cy="9" r="4" fill="#0a0a18"/></svg>${col}/${total}`;
+            }
+        },
+        flashPuntos: function () {
+            const pEl = document.getElementById('puntos-val');
+            if (!pEl) return;
+            pEl.style.color = '#ffd700';
+            setTimeout(() => { pEl.style.color = '#00ffcc'; }, 280);
+        },
+        perderVida: function () {
+            this.invulnerable = true; this.vidas--; this.actualizarUI();
+            if (this.vidas <= 0) {
+                if (navigator.vibrate) navigator.vibrate([100,50,100,50,300]);
+                localStorage.removeItem('puntajeAcumulado'); localStorage.removeItem('vidas');
+                this.finalizarJuego('GAME OVER');
+            } else {
+                if (navigator.vibrate) navigator.vibrate(200);
+                localStorage.setItem('vidas', this.vidas);
+                this.el.body.position.set(SPAWN.x, SPAWN.y+1, SPAWN.z);
+                this.el.body.velocity.set(0,0,0); this.el.body.quaternion.set(0,0,0,1);
+                setTimeout(() => { this.invulnerable = false; }, 1200);
+            }
+        },
+        finalizarJuego: function (titulo) {
+            juegoIniciado = false;
+            document.getElementById('game-over-screen').style.display = 'flex';
+            document.getElementById('final-title').innerText = titulo;
+            document.getElementById('final-score').innerText = `${nombrePiloto} — PTS: ${this.puntos}`;
+            if (document.querySelector('.controles-movil')) document.querySelector('.controles-movil').style.display = 'none';
+        },
+        completarNivel: function () {
+            if (navigator.vibrate) navigator.vibrate([50,50,50,50,200]);
+            juegoIniciado = false;
+            this.puntos += 500; localStorage.setItem('puntajeAcumulado', this.puntos); localStorage.setItem('vidas', this.vidas);
+            this.actualizarUI();
+            const msg = document.getElementById('msg-nivel');
+            msg.innerText = `NIVEL ${NIVEL_NUM} COMPLETADO! +500 PTS`;
+            msg.style.display = 'block';
+            setTimeout(() => { window.location.href = SIGUIENTE_NIVEL; }, 2200);
+        },
+        tick: function () {
+            if (!this.el.body || !juegoIniciado) return;
+            this.el.body.quaternion.set(0,0,0,1); this.el.body.angularVelocity.set(0,0,0);
+            const v = this.el.body.velocity; const f = 9;
+            v.x = this.keys['KeyA'] ? -f : this.keys['KeyD'] ? f : 0;
+            v.z = this.keys['KeyW'] ? -f : this.keys['KeyS'] ? f : 0;
+            if (this.keys['Space'] && Math.abs(v.y)<0.15 && this.puedeSaltar) { v.y=14; this.puedeSaltar=false; }
+            if (!this.keys['Space']) this.puedeSaltar = true;
+            if (this.el.body.position.y < -10 && !this.invulnerable) this.perderVida();
+            const jp = this.el.body.position; const wp = new THREE.Vector3();
+            document.querySelectorAll('.ring[data-collected="false"]').forEach(ring => {
+                ring.object3D.getWorldPosition(wp);
+                if ((jp.x-wp.x)**2+(jp.y-wp.y)**2+(jp.z-wp.z)**2 < 7) {
+                    ring.setAttribute('data-collected','true'); ring.setAttribute('visible','false');
+                    this.puntos+=100; localStorage.setItem('puntajeAcumulado',this.puntos);
+                    this.actualizarUI(); this.flashPuntos();
+                    if (navigator.vibrate) navigator.vibrate(40);
+                }
+            });
+            if (!this.metaActivada) {
+                const meta = document.getElementById('meta');
+                if (meta) {
+                    meta.object3D.getWorldPosition(wp);
+                    if (Math.abs(jp.x-wp.x)<4 && Math.abs(jp.z-wp.z)<4 && jp.y-wp.y>-1 && jp.y-wp.y<14) {
+                        this.metaActivada = true; this.completarNivel();
+                    }
+                }
+            }
+        }
+    });
+
+    AFRAME.registerComponent('seguimiento-camara', {
+        init: function () {
+            this.objetivo=null; this.keys={}; this.rot={x:-20,y:0};
+            window.addEventListener('keydown', e=>{this.keys[e.code]=true;});
+            window.addEventListener('keyup',   e=>{this.keys[e.code]=false;});
+            this.el.sceneEl.addEventListener('loaded', ()=>{ this.objetivo=document.getElementById('jugador'); });
+        },
+        tick: function () {
+            if (!this.objetivo||!juegoIniciado) return;
+            this.el.object3D.position.lerp(this.objetivo.object3D.position,0.1);
+            if (this.keys['ArrowLeft'])  this.rot.y+=2;
+            if (this.keys['ArrowRight']) this.rot.y-=2;
+            if (this.keys['ArrowUp'])    this.rot.x-=1;
+            if (this.keys['ArrowDown'])  this.rot.x+=1;
+            this.rot.x=Math.max(-60,Math.min(20,this.rot.x));
+            this.el.setAttribute('rotation',`${this.rot.x} ${this.rot.y} 0`);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('a-scene').addEventListener('loaded', () => {
+            const ud=document.getElementById('user-display'); if(ud) ud.innerText=nombrePiloto;
+            construirNivel();
+            setTimeout(() => {
+                const s=document.querySelector('#audio-fondo');
+                if(s&&s.components.sound) s.components.sound.playSound();
+                juegoIniciado=true;
+            }, 400);
+        });
+    });
+
+    function reintentar() { localStorage.removeItem('puntajeAcumulado'); localStorage.setItem('vidas','3'); window.location.href='nivel1.html'; }
+    function irAlInicio() { localStorage.removeItem('puntajeAcumulado'); localStorage.removeItem('vidas'); window.location.href='inicio.html'; }
+    </script>
+</head>
+<body>
+<div class="controles-movil">
+    <div class="d-pad">
+        <div></div><div id="m-up" class="d-btn">▲</div><div></div>
+        <div id="m-left" class="d-btn">◀</div><div id="m-down" class="d-btn">▼</div><div id="m-right" class="d-btn">▶</div>
+    </div>
+    <div id="m-jump" class="btn-salto">SALTO</div>
+</div>
+<div id="msg-nivel"></div>
+<div id="ui-top">
+    <div class="label">JUGADOR</div>
+    <div id="user-display" style="font-weight:bold; letter-spacing:2px;">---</div>
+    <div class="label" style="margin-top:6px;">PUNTOS</div>
+    <div id="puntos-val">0</div>
+    <div class="label" style="margin-top:6px;">RINGS</div>
+    <div id="rings-val"></div>
+    <div class="label" style="margin-top:6px;">VIDAS</div>
+    <div id="vidas-val"></div>
+</div>
+<div id="nivel-badge">NIVEL 2 / 3</div>
+<div id="game-over-screen" class="overlay" style="display:none;">
+    <div class="terminal-box">
+        <h1 id="final-title" style="letter-spacing:6px; margin-bottom:10px;">GAME OVER</h1>
+        <p id="final-score" style="font-size:18px; margin:20px 0; color:#ffd700;"></p>
+        <button class="btn-systec" onclick="reintentar()">▶ REINTENTAR</button>
+        <button class="btn-secondary" onclick="irAlInicio()">⬅ VOLVER AL INICIO</button>
+    </div>
+</div>
+<a-scene physics="gravity:-18; friction:0.01;">
+    <a-assets>
+        <img id="textura-cielo" src="Img/1.jpg">
+        <audio id="musica-fondo" src="Video/pista_de_audio.mp3" preload="auto"></audio>
+    </a-assets>
+    <a-sphere id="sky-dome" radius="200" material="src:#textura-cielo; shader:flat; side:back" rotation="0 -90 0"></a-sphere>
+    <a-stars radius="150" count="8000" color="#00ffcc"></a-stars>
+    <a-sound id="audio-fondo" src="#musica-fondo" loop="true" volume="50"></a-sound>
+    <a-light type="ambient" intensity="0.5"></a-light>
+    <a-light type="directional" position="5 10 5" intensity="0.7" color="#fff"></a-light>
+    <a-entity id="jugador" position="0 3 0" scale="2.2 2.2 2.2" motor-gameplay dynamic-body="mass:2; fixedRotation:true">
+        <a-sphere radius="0.5" color="#0054b2"></a-sphere>
+        <a-sphere position="0 -0.1 -0.3" radius="0.25" scale="1 0.7 1" color="#f1c27d"></a-sphere>
+        <a-sphere position="0 -0.05 -0.55" radius="0.04" color="black"></a-sphere>
+        <a-ellipsoid position="-0.15 0.15 -0.42" radius="0.12 0.22 0.05" color="white"></a-ellipsoid>
+        <a-ellipsoid position="0.15 0.15 -0.42"  radius="0.12 0.22 0.05" color="white"></a-ellipsoid>
+        <a-sphere position="-0.13 0.15 -0.47" radius="0.04" color="black"></a-sphere>
+        <a-sphere position=" 0.13 0.15 -0.47" radius="0.04" color="black"></a-sphere>
+        <a-cone position="-0.35 0.4 0" radius-bottom="0.15" height="0.4" rotation="10 0  20" color="#0054b2"></a-cone>
+        <a-cone position=" 0.35 0.4 0" radius-bottom="0.15" height="0.4" rotation="10 0 -20" color="#0054b2"></a-cone>
+        <a-entity rotation="-20 0 0">
+            <a-cone position="0 0.4 0.3"     radius-bottom="0.18" height="0.9" rotation="-80  0  0" color="#0054b2"></a-cone>
+            <a-cone position="-0.25 0.2 0.4" radius-bottom="0.18" height="0.8" rotation="-75 15  0" color="#0054b2"></a-cone>
+            <a-cone position=" 0.25 0.2 0.4" radius-bottom="0.18" height="0.8" rotation="-75 -15 0" color="#0054b2"></a-cone>
+        </a-entity>
+        <a-sphere position="0 -0.7 0" radius="0.35" scale="0.9 1.2 0.8" color="#0054b2">
+            <a-sphere position="0 0 -0.15" radius="0.28" scale="1 1 0.4" color="#f1c27d"></a-sphere>
+        </a-sphere>
+        <a-cylinder position="-0.35 -0.65 0" radius="0.05" height="0.5" rotation="0 0  65" color="#f1c27d"></a-cylinder>
+        <a-cylinder position=" 0.35 -0.65 0" radius="0.05" height="0.5" rotation="0 0 -65" color="#f1c27d"></a-cylinder>
+        <a-sphere position="-0.58 -0.6 0" radius="0.14" color="white"></a-sphere>
+        <a-sphere position=" 0.58 -0.6 0" radius="0.14" color="white"></a-sphere>
+        <a-cylinder position="-0.15 -1.2 0" radius="0.06" height="0.6" color="#0054b2"></a-cylinder>
+        <a-cylinder position=" 0.15 -1.2 0" radius="0.06" height="0.6" color="#0054b2"></a-cylinder>
+        <a-entity position="-0.2 -1.5 -0.1">
+            <a-sphere radius="0.18" scale="1 0.8 1.6" color="#e71d23"></a-sphere>
+            <a-box width="0.38" height="0.1" depth="0.12" position="0 0.05 0" color="white"></a-box>
+            <a-box width="0.1" height="0.12" depth="0.05" position="-0.15 0.08 0" color="#ffd700"></a-box>
+        </a-entity>
+        <a-entity position="0.2 -1.5 -0.1">
+            <a-sphere radius="0.18" scale="1 0.8 1.6" color="#e71d23"></a-sphere>
+            <a-box width="0.38" height="0.1" depth="0.12" position="0 0.05 0" color="white"></a-box>
+            <a-box width="0.1" height="0.12" depth="0.05" position="0.15 0.08 0" color="#ffd700"></a-box>
+        </a-entity>
+    </a-entity>
+    <a-entity id="rig-camara" seguimiento-camara>
+        <a-camera position="0 7 14" look-controls="enabled:false" wasd-controls="enabled:false"></a-camera>
+    </a-entity>
+</a-scene>
+</body>
+</html>
