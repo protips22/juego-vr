@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SYSTEC CORE — INICIO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(circle, #0a1a2e 0%, #000 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; color: #00ffcc;
+        }
+        /* Estrellas de fondo animadas */
+        .stars { position: fixed; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+        .star {
+            position: absolute; background: #00ffcc; border-radius: 50%;
+            animation: twinkle linear infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.1; } 50% { opacity: 1; }
+        }
+
+        .terminal-box {
+            background: rgba(0, 10, 25, 0.97);
+            padding: 50px 60px;
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 60px rgba(0,255,204,0.4), inset 0 0 40px rgba(0,255,204,0.05);
+            border-radius: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        /* Cabeza de Sonic como logo */
+        .sonic-logo {
+            display: flex; justify-content: center; margin-bottom: 20px;
+        }
+        .sonic-head {
+            width: 80px; height: 80px; position: relative;
+        }
+        .sonic-head svg { width: 100%; height: 100%; filter: drop-shadow(0 0 12px #00ffcc); }
+
+        h1 {
+            font-size: 36px; letter-spacing: 12px;
+            text-shadow: 0 0 20px #00ffcc;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            color: #ffd700; font-size: 13px; letter-spacing: 4px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        /* Info de niveles */
+        .nivel-info {
+            display: flex; justify-content: space-around; margin-bottom: 28px;
+        }
+        .nivel-badge-s {
+            background: rgba(0,255,204,0.08); border: 1px solid #00ffcc44;
+            border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #00ffcc99;
+        }
+        .nivel-badge-s span { display: block; color: #ffd700; font-size: 16px; font-weight: bold; }
+
+        input {
+            background: #000; border: 1px solid #00ffcc; color: #00ffcc;
+            padding: 14px; font-size: 20px; font-family: inherit; text-align: center;
+            width: 100%; outline: none; text-transform: uppercase;
+            border-radius: 6px; letter-spacing: 4px;
+            transition: box-shadow 0.3s;
+        }
+        input:focus { box-shadow: 0 0 20px rgba(0,255,204,0.5); }
+
+        .btn-systec {
+            margin-top: 24px; padding: 16px 0; background: #00ffcc; color: #000;
+            border: none; font-weight: bold; cursor: pointer; font-size: 18px;
+            font-family: inherit; width: 100%; letter-spacing: 4px;
+            clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-systec:hover { transform: scale(1.03); box-shadow: 0 0 30px #00ffcc; }
+
+        .btn-volver {
+            margin-top: 14px; background: transparent; border: 1px solid #00ffcc44;
+            color: #00ffcc88; cursor: pointer; font-family: inherit; font-size: 13px;
+            padding: 10px; width: 100%; border-radius: 6px; transition: 0.2s;
+        }
+        .btn-volver:hover { border-color: #00ffcc; color: #00ffcc; }
+
+        .controls-hint {
+            margin-top: 22px; font-size: 11px; color: #00ffcc44; line-height: 1.8;
+            border-top: 1px solid #00ffcc22; padding-top: 14px;
+        }
+        .controls-hint span { color: #00ffcc88; }
+    </style>
+</head>
+<body>
+
+<!-- Estrellas -->
+<div class="stars" id="stars-bg"></div>
+
+<div class="terminal-box">
+    <!-- Logo cabeza Sonic -->
+    <div class="sonic-logo">
+        <div class="sonic-head">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Cabeza azul -->
+                <ellipse cx="50" cy="55" rx="38" ry="35" fill="#0054b2"/>
+                <!-- Hocico crema -->
+                <ellipse cx="50" cy="68" rx="20" ry="14" fill="#f1c27d"/>
+                <!-- Nariz -->
+                <ellipse cx="50" cy="60" rx="5" ry="3" fill="#222"/>
+                <!-- Ojo izq -->
+                <ellipse cx="36" cy="50" rx="9" ry="11" fill="white"/>
+                <ellipse cx="36" cy="50" rx="5" ry="7" fill="#222"/>
+                <circle cx="38" cy="47" r="2" fill="white"/>
+                <!-- Ojo der -->
+                <ellipse cx="64" cy="50" rx="9" ry="11" fill="white"/>
+                <ellipse cx="64" cy="50" rx="5" ry="7" fill="#222"/>
+                <circle cx="66" cy="47" r="2" fill="white"/>
+                <!-- Puas -->
+                <ellipse cx="50" cy="22" rx="12" ry="18" fill="#0054b2" transform="rotate(-10 50 22)"/>
+                <ellipse cx="28" cy="28" rx="10" ry="16" fill="#0054b2" transform="rotate(-35 28 28)"/>
+                <ellipse cx="72" cy="28" rx="10" ry="16" fill="#0054b2" transform="rotate(35 72 28)"/>
+                <!-- Mejilla -->
+                <ellipse cx="50" cy="72" rx="8" ry="5" fill="#e8a87c"/>
+            </svg>
+        </div>
+    </div>
+
+    <h1>EL FLIPANTE ERIZO AZUL</h1>
+    <p class="subtitle">3 NIVELES · RINGS · AVENTURA</p>
+
+    <div class="nivel-info">
+        <div class="nivel-badge-s"><span>🟦</span>NIVEL 1<br></div>
+        <div class="nivel-badge-s"><span>🟩</span>NIVEL 2<br></div>
+        <div class="nivel-badge-s"><span>🟥</span>NIVEL 3<br></div>
+    </div>
+
+    <input type="text" id="input-nombre" placeholder="NOMBRE DEL JUGADOR" maxlength="12" autocomplete="off"
+           onkeydown="if(event.key==='Enter') iniciarMision()">
+    <button class="btn-systec" onclick="iniciarMision()">▶ ESTABLECER ENLACE</button>
+    <button class="btn-volver" onclick="irAlIndex()">⬅ VOLVER AL PORTAL SYSTEC</button>
+
+    <div class="controls-hint">
+        MOVER: <span>W A S D</span> &nbsp;|&nbsp; SALTAR: <span>ESPACIO</span><br>
+        CÁMARA: <span>↑ ↓ ← →</span> &nbsp;|&nbsp; RINGS: <span>100 PTS c/u</span>
+    </div>
+</div>
+
+<script>
+    // Generar estrellas
+    const starsEl = document.getElementById('stars-bg');
+    for (let i = 0; i < 120; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.5 + 0.5;
+        s.style.cssText = `
+            width:${size}px; height:${size}px;
+            top:${Math.random()*100}%;
+            left:${Math.random()*100}%;
+            animation-duration:${Math.random()*4+2}s;
+            animation-delay:${Math.random()*5}s;
+        `;
+        starsEl.appendChild(s);
+    }
+
+    function iniciarMision() {
+        const input = document.getElementById('input-nombre');
+        if (input.value.trim() === '') {
+            input.style.borderColor = '#ff4444';
+            input.placeholder = 'INGRESA TU NOMBRE';
+            setTimeout(() => { input.style.borderColor = '#00ffcc'; input.placeholder = 'NOMBRE DEL JUGADOR'; }, 1500);
+            return;
+        }
+        const nombre = input.value.toUpperCase().trim();
+        localStorage.setItem('nombrePiloto', nombre);
+        localStorage.removeItem('puntajeAcumulado'); // ← REINICIO LIMPIO al empezar nueva partida
+        localStorage.setItem('vidas', '3');
+        window.location.href = 'nivel1.html';
+    }
+
+    function irAlIndex() {
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
